@@ -103,6 +103,25 @@ test('cada error dice hoja y fila', () => {
     assert.match(e, /Factura N° 4 \(fila 6\): no tiene líneas/);
 });
 
+test('lo que AFIP rechaza: B a RI/Monotributo, tarjetas y recibos', () => {
+    const r = leerExcelFacturas(libro(
+        [
+            [1, '', 'Factura B', '', '', '', '', CUIT_OK, 'Responsable Monotributo', '', ''],
+            [2, '', 'Factura B', '', '', '', '', CUIT_OK, 'IVA Responsable Inscripto', '', ''],
+            [3, '', '', '', '', '', '', '', '', 'Contado; Tarjeta de Débito', ''],
+            [4, '', 'Recibo B', '', '', '', '', '', '', '', ''],
+            [5, '', 'Factura A', '', '', '', '', CUIT_OK, 'Responsable Monotributo', '', ''],
+        ],
+        [1, 2, 3, 4, 5].map(n => [n, 'Algo', 1, '', 10, ''])
+    ), { tipoEmisor: 'B', hoy: HOY });
+    const e = r.errores.join('\n');
+    assert.match(e, /Facturas, fila 2: Factura B no se puede hacer a "Responsable Monotributo"/);
+    assert.match(e, /Facturas, fila 3: Factura B no se puede hacer a "IVA Responsable Inscripto"/);
+    assert.match(e, /Facturas, fila 4: "Tarjeta de Débito" no se puede usar desde Excel/);
+    assert.match(e, /Facturas, fila 5: el comprobante "Recibo B" no se puede emitir/);
+    assert.strictEqual(r.errores.length, 4);   // la A al monotributista está bien
+});
+
 test('emisor sin tipo, hojas o columnas que faltan', () => {
     assert.match(leerExcelFacturas(libro([], []), { tipoEmisor: null, hoy: HOY }).errores[0], /no tiene tipo de contribuyente/);
     const sinLineas = new ExcelJS.Workbook();

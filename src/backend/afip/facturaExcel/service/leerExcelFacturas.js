@@ -6,8 +6,8 @@
 
 const { cuitValido } = require('../../importarLibroIva/service/validarArchivosIva.js');
 const {
-    COMPROBANTES, esLetraA, ACTIVIDADES, CONDICIONES_IVA, CONSUMIDOR_FINAL,
-    CONDICIONES_VENTA, CONDICION_VENTA_DEFECTO, UNIDADES, ALICUOTAS, ALICUOTA_DEFECTO,
+    COMPROBANTES, esLetraA, esLetraB, ACTIVIDADES, CONDICIONES_IVA, CONSUMIDOR_FINAL, CONDICIONES_IVA_PARA_B,
+    CONDICIONES_VENTA, CONDICIONES_VENTA_CON_TARJETA, CONDICION_VENTA_DEFECTO, UNIDADES, ALICUOTAS, ALICUOTA_DEFECTO,
 } = require('./catalogo.js');
 const { HOJA_FACTURAS, HOJA_LINEAS, COLUMNAS_FACTURAS, COLUMNAS_LINEAS, normalizarTitulo } = require('./columnas.js');
 
@@ -143,6 +143,9 @@ function armarFactura(f, tipoEmisor, hoy, errores) {
     const letraA = comprobante && esLetraA(comprobante.texto);
     if (letraA && tipoDocumento !== 80) err(`${comprobante.texto} necesita el CUIT del receptor.`);
     if (letraA && condicionIva && condicionIva.codigo === CONSUMIDOR_FINAL) err(`${comprobante.texto} no se puede hacer a un Consumidor Final.`);
+    if (comprobante && esLetraB(comprobante.texto) && condicionIva && !CONDICIONES_IVA_PARA_B.includes(condicionIva.codigo)) {
+        err(`${comprobante.texto} no se puede hacer a "${condicionIva.texto}" (AFIP le pide Factura A).`);
+    }
     if (!letraA && !documento && condicionIva && condicionIva.codigo !== CONSUMIDOR_FINAL) {
         err(`sin N° de doc. el receptor tiene que ser Consumidor Final (dice "${condicionIva.texto}").`);
     }
@@ -152,6 +155,7 @@ function armarFactura(f, tipoEmisor, hoy, errores) {
     for (const v of ventas) {
         const encontrada = buscar(CONDICIONES_VENTA, v);
         if (encontrada) condicionesVenta.push(encontrada);
+        else if (buscar(CONDICIONES_VENTA_CON_TARJETA, v)) err(`"${v}" no se puede usar desde Excel (AFIP pide tipo y número de tarjeta); usá "Otros medios de pago electrónico".`);
         else err(`la condición de venta "${v}" no existe.`);
     }
 

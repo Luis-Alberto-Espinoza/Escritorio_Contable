@@ -83,7 +83,8 @@ async function generarModeloExcel(tipoEmisor) {
         '  Actividad: Servicio o Producto. Vacía = Servicio.',
         '  Desde / Hasta / Vto. pago: solo para servicios. Vacías = la fecha de la factura.',
         '  N° doc.: CUIT (11 dígitos) o DNI (7 u 8). Vacío = consumidor final sin identificar (solo con Consumidor Final; las "A" piden CUIT).',
-        '  Condición IVA: de la lista. Vacía = Consumidor Final.',
+        '  Condición IVA: de la lista. Vacía = Consumidor Final.'
+            + (tipoEmisor === 'B' ? ' En los "B" no va IVA Responsable Inscripto ni Monotributo: a esos se les hace Factura A.' : ''),
         `  Condición de venta: una o varias separadas con ";" (ej: Contado; Transferencia Bancaria). Vacía = Cuenta Corriente.`,
         `     Opciones: ${CONDICIONES_VENTA.join('; ')}.`,
         '  Nombre: opcional (nombra la carpeta del PDF).',
